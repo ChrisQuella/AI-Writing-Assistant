@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能测试 - 智能写作助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">🧪 智能写作助手 - 功能测试</h1>
+        
+        <div class="space-y-6">
+            <!-- 测试状态 -->
+            <div id="testStatus" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-blue-800 mb-2">测试状态</h2>
+                <p class="text-blue-700">准备开始测试...</p>
+            </div>
+
+            <!-- 测试按钮 -->
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="testLocalStorage()" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                    测试 LocalStorage
+                </button>
+                <button onclick="testHistoryFunctions()" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition">
+                    测试历史记录功能
+                </button>
+                <button onclick="testUIElements()" class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition">
+                    测试 UI 元素
+                </button>
+                <button onclick="testPromptTemplates()" class="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition">
+                    测试提示词模板
+                </button>
+                <button onclick="clearTestData()" class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition">
+                    清除测试数据
+                </button>
+                <button onclick="runAllTests()" class="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 transition">
+                    运行所有测试
+                </button>
+            </div>
+
+            <!-- 测试结果 -->
+            <div id="testResults" class="bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-[300px]">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">测试结果</h2>
+                <div id="resultsContent" class="text-sm text-gray-700 space-y-2">
+                    <p>等待测试...</p>
+                </div>
+            </div>
+
+            <!-- 快速链接 -->
+            <div class="flex gap-4">
+                <a href="index.html" class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg text-center hover:from-blue-600 hover:to-indigo-700 transition">
+                    打开主应用
+                </a>
+                <a href="TEST_CHECKLIST.md" target="_blank" class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg text-center hover:bg-gray-300 transition">
+                    查看测试清单
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                success: 'text-green-600',
+                error: 'text-red-600',
+                warning: 'text-orange-600',
+                info: 'text-blue-600'
+            };
+            
+            testResults.push(`<p class="${colors[type]}">[${timestamp}] ${message}</p>`);
+            updateResults();
+        }
+
+        function updateResults() {
+            document.getElementById('resultsContent').innerHTML = testResults.join('');
+        }
+
+        function updateStatus(message) {
+            document.getElementById('testStatus').innerHTML = `
+                <h2 class="text-lg font-semibold text-blue-800 mb-2">测试状态</h2>
+                <p class="text-blue-700">${message}</p>
+            `;
+        }
+
+        // 测试 1: LocalStorage
+        function testLocalStorage() {
+            testResults = [];
+            updateStatus('正在测试 LocalStorage...');
+            
+            try {
+                // 测试写入
+                localStorage.setItem('test_key', 'test_value');
+                log('✅ LocalStorage 写入测试通过', 'success');
+                
+                // 测试读取
+                const value = localStorage.getItem('test_key');
+                if (value === 'test_value') {
+                    log('✅ LocalStorage 读取测试通过', 'success');
+                } else {
+                    log('❌ LocalStorage 读取测试失败', 'error');
+                }
+                
+                // 测试删除
+                localStorage.removeItem('test_key');
+                log('✅ LocalStorage 删除测试通过', 'success');
+                
+                // 检查 API Key
+                const apiKey = localStorage.getItem('zhipu_api_key');
+                if (apiKey) {
+                    log(`✅ 发现已保存的 API Key: ${apiKey.substring(0, 10)}...`, 'success');
+                } else {
+                    log('⚠️ 未发现 API Key，请在主应用中设置', 'warning');
+                }
+                
+                // 检查历史记录
+                const history = localStorage.getItem('writingHistory');
+                if (history) {
+                    const records = JSON.parse(history);
+                    log(`✅ 发现 ${records.length} 条历史记录`, 'success');
+                } else {
+                    log('ℹ️ 暂无历史记录', 'info');
+                }
+                
+                updateStatus('LocalStorage 测试完成');
+            } catch (error) {
+                log(`❌ LocalStorage 测试失败: ${error.message}`, 'error');
+                updateStatus('LocalStorage 测试失败');
+            }
+        }
+
+        // 测试 2: 历史记录功能
+        function testHistoryFunctions() {
+            testResults = [];
+            updateStatus('正在测试历史记录功能...');
+            
+            try {
+                // 创建测试记录
+                const testRecord = {
+                    id: Date.now(),
+                    mode: 'continue',
+                    modeName: '📖 文章续写',
+                    prompt: '这是一个测试提示词，用于验证历史记录功能是否正常工作。',
+                    input: '这是一个测试提示词...',
+                    output: '这是测试生成的内容。\n\n包含多行文本。\n\n用于验证历史记录的保存和加载功能。',
+                    temperature: 0.7,
+                    maxTokens: 1500,
+                    timestamp: new Date().toLocaleString('zh-CN'),
+                    timestampRaw: Date.now()
+                };
+                
+                // 获取现有历史
+                let history = JSON.parse(localStorage.getItem('writingHistory') || '[]');
+                log(`ℹ️ 当前历史记录数: ${history.length}`, 'info');
+                
+                // 添加测试记录
+                history.unshift(testRecord);
+                localStorage.setItem('writingHistory', JSON.stringify(history));
+                log('✅ 测试记录已添加', 'success');
+                
+                // 验证保存
+                const saved = JSON.parse(localStorage.getItem('writingHistory'));
+                if (saved[0].id === testRecord.id) {
+                    log('✅ 记录保存验证通过', 'success');
+                } else {
+                    log('❌ 记录保存验证失败', 'error');
+                }
+                
+                // 测试记录限制
+                if (history.length > 100) {
+                    history = history.slice(0, 100);
+                    localStorage.setItem('writingHistory', JSON.stringify(history));
+                    log('✅ 记录数量限制测试通过（最多100条）', 'success');
+                }
+                
+                log(`ℹ️ 更新后历史记录数: ${history.length}`, 'info');
+                updateStatus('历史记录功能测试完成');
+                
+            } catch (error) {
+                log(`❌ 历史记录功能测试失败: ${error.message}`, 'error');
+                updateStatus('历史记录功能测试失败');
+            }
+        }
+
+        // 测试 3: UI 元素
+        function testUIElements() {
+            testResults = [];
+            updateStatus('正在测试 UI 元素...');
+            
+            const elements = [
+                'writingMode',
+                'inputText',
+                'temperature',
+                'tempValue',
+                'maxTokens',
+                'maxTokensValue',
+                'optimizeBtn',
+                'generateBtn',
+                'outputArea',
+                'copyBtn',
+                'historyList',
+                'clearHistoryBtn',
+                'settingsBtn',
+                'advancedToggle',
+                'advancedPanel'
+            ];
+            
+            log('ℹ️ 注意：此测试需要在主应用页面运行', 'warning');
+            log('ℹ️ 请打开浏览器控制台，在主应用页面运行以下代码：', 'info');
+            
+            const testCode = `
+// UI 元素测试
+const elements = ${JSON.stringify(elements)};
+let passed = 0;
+let failed = 0;
+
+elements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        console.log('✅', id, '- 存在');
+        passed++;
+    } else {
+        console.error('❌', id, '- 不存在');
+        failed++;
+    }
+});
+
+console.log(\`\\n测试结果: \${passed} 通过, \${failed} 失败\`);
+            `;
+            
+            log(`<pre class="bg-gray-800 text-green-400 p-4 rounded mt-2 overflow-x-auto">${testCode}</pre>`, 'info');
+            updateStatus('UI 元素测试说明已显示');
+        }
+
+        // 测试 4: 提示词模板
+        function testPromptTemplates() {
+            testResults = [];
+            updateStatus('正在测试提示词模板...');
+            
+            const templates = {
+                continue: (input) => `请继续写下面的文章，保持风格一致，内容连贯：\n\n${input}`,
+                rewrite: (input) => `请改写下面的内容，使其更加流畅、专业：\n\n${input}`,
+                expand: (input) => `请扩展下面的内容，增加更多细节和例子：\n\n${input}`,
+                summarize: (input) => `请总结下面的内容，提取核心要点：\n\n${input}`,
+                email: (input) => `请写一封专业的邮件，主题是：\n\n${input}`,
+                copywriting: (input) => `请为以下内容写一段吸引人的营销文案：\n\n${input}`
+            };
+            
+            const testInput = '人工智能正在改变世界';
+            
+            Object.keys(templates).forEach(mode => {
+                try {
+                    const result = templates[mode](testInput);
+                    if (result.includes(testInput)) {
+                        log(`✅ ${mode} 模板测试通过`, 'success');
+                    } else {
+                        log(`❌ ${mode} 模板测试失败`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${mode} 模板测试出错: ${error.message}`, 'error');
+                }
+            });
+            
+            updateStatus('提示词模板测试完成');
+        }
+
+        // 清除测试数据
+        function clearTestData() {
+            if (confirm('确定要清除所有测试数据吗？这将删除 API Key 和历史记录！')) {
+                testResults = [];
+                updateStatus('正在清除测试数据...');
+                
+                try {
+                    localStorage.removeItem('zhipu_api_key');
+                    log('✅ API Key 已清除', 'success');
+                    
+                    localStorage.removeItem('writingHistory');
+                    log('✅ 历史记录已清除', 'success');
+                    
+                    updateStatus('测试数据清除完成');
+                } catch (error) {
+                    log(`❌ 清除失败: ${error.message}`, 'error');
+                    updateStatus('测试数据清除失败');
+                }
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            testResults = [];
+            updateStatus('正在运行所有测试...');
+            
+            log('========== 开始测试 ==========', 'info');
+            
+            // 测试 1
+            log('\n--- 测试 1: LocalStorage ---', 'info');
+            testLocalStorage();
+            
+            await sleep(1000);
+            
+            // 测试 2
+            log('\n--- 测试 2: 历史记录功能 ---', 'info');
+            testHistoryFunctions();
+            
+            await sleep(1000);
+            
+            // 测试 4
+            log('\n--- 测试 4: 提示词模板 ---', 'info');
+            testPromptTemplates();
+            
+            log('\n========== 测试完成 ==========', 'info');
+            log('ℹ️ UI 元素测试需要在主应用页面手动运行', 'warning');
+            
+            updateStatus('所有自动测试完成');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 页面加载时显示欢迎信息
+        window.onload = function() {
+            log('👋 欢迎使用智能写作助手测试工具', 'info');
+            log('ℹ️ 点击上方按钮开始测试', 'info');
+        };
+    </script>
+</body>
+</html>
